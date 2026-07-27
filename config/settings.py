@@ -1,44 +1,102 @@
-# Add these to your Django settings.py file
+import os
+from pathlib import Path
+from urllib.parse import urlparse
 
-# ============================================
-# INSTALLED APPS
-# ============================================
-# Add to INSTALLED_APPS:
+# Build paths
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Secret Key
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-key-change-in-production')
+
+# Debug Mode
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
+# Allowed Hosts
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+if not DEBUG:
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+
+# Root URL Configuration
+ROOT_URLCONF = 'config.urls'
+
+# Application definition
 INSTALLED_APPS = [
-    # ... existing apps ...
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
     'rest_framework',
     'django_filters',
     'corsheaders',
-    'football',  # Your app
+    'football',
 ]
 
-# ============================================
-# MIDDLEWARE
-# ============================================
-# Add corsheaders middleware
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # ... rest of middleware ...
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ============================================
-# DATABASE CONFIGURATION
-# ============================================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'scottish_football',
-        'USER': 'mundar',
-        'PASSWORD': 'your_password_here',  # Replace with actual password
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+# WSGI Application
+WSGI_APPLICATION = 'config.wsgi.application'
 
-# ============================================
-# REST FRAMEWORK CONFIGURATION
-# ============================================
+# Database Configuration
+if os.environ.get('DATABASE_URL'):
+    # Production: PostgreSQL from Railway
+    db_from_env = urlparse(os.environ['DATABASE_URL'])
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_from_env.path[1:],
+            'USER': db_from_env.username,
+            'PASSWORD': db_from_env.password,
+            'HOST': db_from_env.hostname,
+            'PORT': db_from_env.port or 5432,
+        }
+    }
+else:
+    # Local Development: SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+# Password Validation
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+# Internationalization
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+# Static Files
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+# Media Files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Default Primary Key
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -49,24 +107,26 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGE_SIZE': 50,
 }
 
-# ============================================
-# CORS CONFIGURATION
-# ============================================
-# Allow requests from frontend (adjust as needed for production)
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",      # React development
-    "http://localhost:8000",      # Local Django
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
-]
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000'
+).split(',')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS if origin.strip()]
 
-# ============================================
-# OPTIONAL: API DOCUMENTATION
-# ============================================
-# To add Swagger/OpenAPI documentation, install:
-# pip install drf-spectacular
-# Then add to INSTALLED_APPS:
-# 'drf_spectacular',
-# 
-# And add to REST_FRAMEWORK settings:
-# 'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+# CSRF Configuration for Railway
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS',
+    'http://localhost:8000,http://127.0.0.1:8000'
+).split(',')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
+
+# Security Settings for Production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_SECURITY_POLICY = {
+        'default-src': ("'self'",),
+    }
