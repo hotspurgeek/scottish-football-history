@@ -103,7 +103,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'football.views.StandardPagination',
+    'DEFAULT_PAGINATION_CLASS': 'football.pagination.StandardPagination',
     'DEFAULT_PAGE_SIZE': 50,
 }
 
