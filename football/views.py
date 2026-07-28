@@ -1,8 +1,9 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import models
+from .pagination import StandardPagination
 from .models import (
     DataSource, Venue, Team, Competition, Season, Referee, Player,
     Manager, TeamManager, PlayerClubHistory, Transfer, InternationalCap,
@@ -15,7 +16,6 @@ from .serializers import (
     InternationalCapSerializer, MatchSerializer, MatchDetailSerializer,
     LineupSerializer, GoalSerializer, LeagueStandingSerializer, PlayerDetailSerializer
 )
-
 
 
 class DataSourceViewSet(viewsets.ModelViewSet):
